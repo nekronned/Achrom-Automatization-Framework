@@ -6,7 +6,7 @@
 
     <groupId>dev.selenium</groupId>
     <artifactId>automatizacion-achrom</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.1</version>
 
     <properties>
         <maven.compiler.release>11</maven.compiler.release>
@@ -25,6 +25,13 @@
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- Apache POI: genera el reporte de pruebas en Word (.docx) -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.3.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
