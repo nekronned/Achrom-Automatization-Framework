@@ -1,0 +1,18 @@
+<configuration>
+    <!-- Consola. El archivo de cada corrida lo agrega com.achron.reporting.Log -->
+    <appender name="CONSOLA" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss} | %X{modulo:-corrida} | %X{caso:--} | %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <logger name="achron" level="INFO" additivity="false">
+        <appender-ref ref="CONSOLA"/>
+    </logger>
+
+    <!-- Lo demas (Selenium, Allure, POI) solo si es una advertencia o un error -->
+    <root level="WARN">
+        <appender-ref ref="CONSOLA"/>
+    </root>
+</configuration>

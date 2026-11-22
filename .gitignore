@@ -1,5 +1,16 @@
+# Compilacion de Maven
 target/
-.vscode/
 *.class
+
+# Resultados de las corridas (se generan cada vez)
 reportes de cada modulo/
 reportes/
+allure-results/
+allure-report/
+*.log
+*.docx
+!src/test/resources/plantilla_reporte.docx
+
+# Editor
+.vscode/
+.idea/
