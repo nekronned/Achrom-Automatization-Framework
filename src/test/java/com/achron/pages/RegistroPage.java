@@ -13,6 +13,7 @@ public class RegistroPage {
     private static final By ENLACE_REGISTRATE = By.xpath("//button[normalize-space()='Regístrate aquí']");
     private static final By NOMBRE = By.id("fullName");
     private static final By SOY_COACH = By.xpath("//button[.//span[normalize-space()='Soy coach']]");
+    private static final By SOY_ATLETA = By.xpath("//button[.//span[normalize-space()='Soy atleta']]");
     private static final By ENVIAR = By.cssSelector("button[type='submit']");
     private static final By REGISTRO_EXITOSO = By.xpath("//*[contains(text(), 'Registro exitoso')]");
 
@@ -53,6 +54,11 @@ public class RegistroPage {
 
     public void enviarComoCoach() {
         web.clic(SOY_COACH);
+        web.clic(ENVIAR);
+    }
+
+    public void enviarComoAtleta() {
+        web.clic(SOY_ATLETA);
         web.clic(ENVIAR);
     }
 

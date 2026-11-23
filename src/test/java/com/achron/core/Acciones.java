@@ -26,7 +26,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 public class Acciones {
 
     /** Aviso emergente (toast) que el sitio muestra despues de guardar o cuando hay un error. */
-    public static final By AVISO = By.cssSelector("li[role='status'][data-state='open']");
+    public static final By AVISO = By.cssSelector("li[role='status'][data-state='open'], li[data-sonner-toast]");
     /** Ventana (dialogo) abierta. */
     public static final By DIALOGO = By.cssSelector("[role='dialog'][data-state='open']");
     /** Textos de error en rojo dentro de una ventana. */
@@ -112,6 +112,18 @@ public class Acciones {
         WebElement campo = encontrar(localizador);
         campo.sendKeys(Keys.chord(Keys.CONTROL, "a"), Keys.BACK_SPACE);
         campo.sendKeys(texto);
+    }
+
+    /**
+     * Pone el valor directo en el campo y avisa a React. Se usa en fechas y horas, porque al escribirlas
+     * con el teclado el formato depende del idioma del navegador.
+     */
+    public void ponerValor(By campo, String valor) {
+        ((JavascriptExecutor) driver).executeScript(
+                "var e = arguments[0]; var p = Object.getPrototypeOf(e);"
+                        + "Object.getOwnPropertyDescriptor(p, 'value').set.call(e, arguments[1]);"
+                        + "e.dispatchEvent(new Event('input', {bubbles: true})); e.dispatchEvent(new Event('change', {bubbles: true}));",
+                encontrar(campo), valor);
     }
 
     public void subirArchivo(By campoArchivo, Path archivo) {

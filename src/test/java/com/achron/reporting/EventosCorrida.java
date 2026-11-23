@@ -47,6 +47,7 @@ public class EventosCorrida implements TestExecutionListener {
                 Historial.contar(todos, Caso.Resultado.PASO), fallaron, errores, segundos, estado);
         if (errores > 0) {
             log.warn("ALERTA: hubo {} errores de la automatizacion; revisar las lineas ERROR de este log", errores);
+            ServiceNow.avisarCorridaRota(todos.size() + " casos, " + errores + " con ERROR de la automatizacion.");
         }
     }
 

@@ -46,7 +46,9 @@ public final class Hallazgos {
             }
             for (Caso caso : casos) {
                 if (caso.resultado() == Caso.Resultado.FALLO) {
-                    lineas.add(linea(caso, yaReportados.contains(caso.id()) ? "Ya reportado" : "Nuevo"));
+                    boolean nuevo = !yaReportados.contains(caso.id());
+                    lineas.add(linea(caso, nuevo ? "Nuevo" : "Ya reportado"));
+                    if (nuevo) ServiceNow.avisarHallazgo(caso);
                 }
             }
             Files.write(archivo, lineas, StandardCharsets.UTF_8);

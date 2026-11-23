@@ -67,12 +67,13 @@ AutomatizacionAchrom
 │   │   ├── BaseTest.java         base de todas las pruebas: abre y cierra el navegador
 │   │   ├── DriverFactory.java    crea Chrome o Edge según la configuración
 │   │   ├── Acciones.java         clic, escribir, leer y esperar (esperas explícitas)
-│   │   ├── CuentaDePrueba.java   crea una cuenta de coach nueva por clase
+│   │   ├── CuentaDePrueba.java   crea las cuentas de prueba (coach y atletas) por clase
 │   │   ├── ArchivosDePrueba.java imagen y archivo de texto para subir
 │   │   └── Modulo.java           anotación con el nombre y el título del módulo
 │   ├── pages                     Page Objects: localizadores y acciones de cada pantalla
 │   │   ├── LoginPage, RegistroPage, MenuLateral, PanelPage, PerfilPage,
-│   │   └── EjerciciosPage, BibliotecaPage, InicioPublicoPage, SeccionesPage
+│   │   ├── EjerciciosPage, BibliotecaPage, InicioPublicoPage, SeccionesPage,
+│   │   └── AtletaPage, AsesoradosPage, CarteraPage   (coach con asesorados)
 │   ├── reporting                 todo lo que se genera después de probar
 │   │   ├── Caso.java             un caso ejecutado: comprobaciones, captura y resultado
 │   │   ├── SeguimientoCasos.java extensión JUnit: log, captura, Allure, reportes al final
@@ -81,10 +82,12 @@ AutomatizacionAchrom
 │   │   ├── ReporteWord.java      reportes Word (por módulo y consolidado)
 │   │   ├── Hallazgos.java        Hallazgos_<fecha>.txt
 │   │   ├── Historial.java        historial_corridas.csv e Informe_<fecha>.txt
-│   │   └── Log.java              archivo de log de la corrida
+│   │   ├── Log.java              archivo de log de la corrida
+│   │   └── ServiceNow.java       crea incidentes (INC) en ServiceNow; apagado por defecto
 │   └── tests                     una clase por módulo
 │       ├── RegistroTest, SesionTest, InicioPublicoTest, PanelTest,
-│       └── PerfilTest, EjerciciosTest, BibliotecaTest, SeccionesTest
+│       ├── PerfilTest, EjerciciosTest, BibliotecaTest, SeccionesTest,
+│       └── AsesoradosTest        coach con atletas: comprobantes, chat, sesiones, rutinas
 ├── src/test/resources
 │   ├── config.properties         URL, navegador, esperas, rutas, datos del reporte
 │   ├── datos.properties          datos de prueba
@@ -112,7 +115,7 @@ Cada pantalla del sitio tiene una clase en `pages` con sus localizadores (cómo 
 ### BaseTest y el ciclo de vida de JUnit
 JUnit ejecuta, en este orden:
 
-1. `@BeforeAll` (una vez por clase): cada clase crea su cuenta de coach con `CuentaDePrueba.crearCoach`.
+1. `@BeforeAll` (una vez por clase): cada clase crea su cuenta de coach con `CuentaDePrueba.crearCoach`. `AsesoradosTest` además crea tres atletas con `CuentaDePrueba.crearAtleta`. Cada atleta elige al coach, registra un pago con un comprobante de prueba (una imagen; no se mueve dinero) y el primero le escribe por el chat.
 2. Por cada caso:
    - `@BeforeEach`: `BaseTest` abre un navegador nuevo.
    - El caso (`@ParameterizedTest`): hace lo que dice la tabla y anota las comprobaciones.
@@ -221,7 +224,7 @@ Si el sitio está lento, basta con subir los tiempos: `mvn test -Despera.respues
 | Qué | Comando |
 | --- | --- |
 | Todo | `mvn test` |
-| Un módulo | `mvn test -Dgroups=perfil` (etiquetas: `registro`, `sesion`, `inicio`, `panel`, `perfil`, `ejercicios`, `biblioteca`, `secciones`) |
+| Un módulo | `mvn test -Dgroups=perfil` (etiquetas: `registro`, `sesion`, `inicio`, `panel`, `perfil`, `ejercicios`, `biblioteca`, `secciones`, `asesorados`) |
 | Una clase | `mvn test -Dtest=PerfilTest` |
 | Sin abrir ventanas | `mvn test -Dnavegador.headless=true` |
 | Con Edge | `mvn test -Dnavegador=edge` |
@@ -229,12 +232,6 @@ Si el sitio está lento, basta con subir los tiempos: `mvn test -Despera.respues
 | Generar Allure en carpeta | `mvn allure:report` → `target/site/allure-maven-plugin/index.html` |
 
 Un caso fallado no detiene la corrida (`testFailureIgnore` en el `pom.xml`), así siempre salen todos los reportes. Maven igual imprime al final qué casos fallaron.
-
-**Programarlo todos los días a las 7:00 a. m.** con el Programador de tareas de Windows (una sola vez, en una consola):
-```
-schtasks /create /tn "Pruebas Achron" /sc daily /st 07:00 /tr "cmd /c cd /d C:\Users\ADMIN\Documents\CARPETAS-VISUAL\AutomatizacionAchrom && mvn -B test -Dnavegador.headless=true"
-```
-Para quitarla: `schtasks /delete /tn "Pruebas Achron"`.
 
 ---
 
@@ -285,7 +282,16 @@ Los umbrales están en la hoja Supuestos:
 - un módulo que dura más de 1,5 veces su promedio = lento;
 - si no hubo corrida hoy, sale una alerta.
 
-**Integración futura con ServiceNow:** el punto para enchufarla es el fin de la corrida en `EventosCorrida`. Cuando el estado sea ROTA, se crearía un incidente (INC) con el resumen y el log adjunto.
+**Integración con ServiceNow** (`reporting/ServiceNow.java`):
+
+- **Corrida rota:** cuando una corrida queda ROTA, crea un incidente (INC) con el resumen y la ruta del log.
+- **Hallazgos nuevos:** con `servicenow.incidentePorHallazgo=true`, crea además un INC por cada hallazgo nuevo.
+- **Cómo se configura:** viene apagada (`servicenow.habilitado=false`) y, mientras tanto, solo escribe en el log qué incidente habría creado. Para encenderla:
+  1. llenar en `config.properties` los valores `servicenow.url`, `servicenow.usuario` y `servicenow.grupo`;
+  2. pasar la clave con `-Dservicenow.clave=...` o en la variable de entorno `SERVICENOW_CLAVE`. Nunca se escribe en el archivo;
+  3. poner `servicenow.habilitado=true`.
+
+  Usa la API REST de ServiceNow (`/api/now/table/incident`).
 
 ---
 
@@ -327,6 +333,7 @@ Los umbrales están en la hoja Supuestos:
 - **IDs de casos:**
   - `REG` registro
   - `SES` sesión
+  - `ASE` coach con asesorados
   - `INI` página pública
   - `DAS` panel
   - `PER` perfil

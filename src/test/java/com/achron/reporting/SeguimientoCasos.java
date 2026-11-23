@@ -28,6 +28,7 @@ import org.slf4j.MDC;
 public class SeguimientoCasos implements BeforeAllCallback, BeforeTestExecutionCallback, AfterTestExecutionCallback, AfterAllCallback {
 
     private static final Logger LOG = Log.get();
+    private static final double ALTO_MAXIMO_CAPTURA = 6000;
     private static final String INICIO_MODULO = "inicioModulo";
     private static final String INICIO_CASO = "inicioCaso";
 
@@ -139,7 +140,9 @@ public class SeguimientoCasos implements BeforeAllCallback, BeforeTestExecutionC
             zona.put("x", 0);
             zona.put("y", 0);
             zona.put("width", contenido.get("width"));
-            zona.put("height", contenido.get("height"));
+            // tope de alto: una pagina con cientos de tarjetas haria una imagen gigante que puede colgar a Chrome
+            double alto = ((Number) contenido.get("height")).doubleValue();
+            zona.put("height", Math.min(alto, ALTO_MAXIMO_CAPTURA));
             zona.put("scale", 1);
             Map<String, Object> opciones = new HashMap<>();
             opciones.put("captureBeyondViewport", true);

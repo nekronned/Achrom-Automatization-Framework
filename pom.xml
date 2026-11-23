@@ -6,7 +6,7 @@
 
     <groupId>com.achron</groupId>
     <artifactId>automatizacion-achron</artifactId>
-    <version>2.0</version>
+    <version>2.1</version>
     <name>Automatización de pruebas Achron</name>
 
     <properties>
