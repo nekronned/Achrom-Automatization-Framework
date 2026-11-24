@@ -72,6 +72,27 @@ public class BibliotecaPage {
         web.clic(By.xpath("//*[@role='dialog'][@data-state='open']//button[normalize-space()='Agregar bloque']"));
     }
 
+    /** En el bloque de la rutina: abre "Importar movimiento" y elige el ejercicio. */
+    public void importarEjercicio(String ejercicio) {
+        web.clic(By.xpath("(//*[@role='dialog'][@data-state='open']//button[@aria-haspopup='dialog'])[1]"));
+        web.clic(By.xpath("//*[@role='dialog'][.//h2[normalize-space()='Importar movimiento']]//span[normalize-space()='" + ejercicio + "']"));
+    }
+
+    /** Buscador de la pestaña activa ("Buscar metodología...", "Buscar método...", "Buscar rutina..."). */
+    public void buscar(String texto) {
+        web.escribir(By.cssSelector("main input[placeholder^='Buscar']"), texto);
+    }
+
+    public int tarjetas() {
+        return web.todos(By.cssSelector("[role='tabpanel'][data-state='active'] .gorilla-card")).size();
+    }
+
+    /** true si la tarjeta con ese titulo muestra el icono de borrar. Solo lo mira: nunca lo pulsa. */
+    public boolean ofreceBorrar(String titulo) {
+        return web.existe(By.xpath("//*[@role='tabpanel'][@data-state='active']//h3[normalize-space()='" + titulo + "']"
+                + "/ancestor::div[contains(@class, 'relative')][1]//*[name()='svg' and contains(@class, 'lucide-trash')]"));
+    }
+
     public String textoPestana() {
         return web.texto(PESTANA_ACTIVA);
     }

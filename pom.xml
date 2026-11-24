@@ -6,7 +6,7 @@
 
     <groupId>com.achron</groupId>
     <artifactId>automatizacion-achron</artifactId>
-    <version>2.1</version>
+    <version>2.2</version>
     <name>Automatización de pruebas Achron</name>
 
     <properties>
@@ -89,6 +89,16 @@
                     <systemPropertyVariables>
                         <allure.results.directory>${project.build.directory}/allure-results</allure.results.directory>
                     </systemPropertyVariables>
+                </configuration>
+            </plugin>
+            <!-- mvn test-compile exec:java: crea un coach y deja el navegador abierto en su perfil -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <configuration>
+                    <mainClass>com.achron.herramientas.AbrirCuentaCoach</mainClass>
+                    <classpathScope>test</classpathScope>
                 </configuration>
             </plugin>
             <plugin>

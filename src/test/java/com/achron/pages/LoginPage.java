@@ -23,6 +23,11 @@ public class LoginPage {
 
     public void abrir() {
         web.irA("auth");
+        // a veces el sitio entrega la pagina en blanco: se recarga una vez y queda anotado en el log
+        if (!web.esperarQue("respuesta", d -> web.existe(EMAIL))) {
+            com.achron.reporting.Log.get().warn("la pagina de inicio de sesion no cargo ({}); se recarga", web.url());
+            web.recargar();
+        }
         web.encontrar(EMAIL);
     }
 

@@ -11,6 +11,7 @@ import com.achron.pages.AsesoradosPage;
 import com.achron.pages.AtletaPage;
 import com.achron.pages.CarteraPage;
 import com.achron.pages.LoginPage;
+import com.achron.pages.MenuLateral;
 import java.time.LocalDate;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
@@ -77,7 +78,18 @@ class AsesoradosTest extends BaseTest {
             "ASE-18 | Chat                  | El coach ve el mensaje del atleta                    | verMensaje       | A | -                          | Alta",
             "ASE-19 | Chat                  | El coach responde y la respuesta queda guardada      | responder        | A | asesorados.mensaje.coach   | Alta",
             "ASE-20 | Chat                  | Un mensaje vacio no se envia                         | mensajeVacio     | A | -                          | Baja",
-            "ASE-21 | Comprobantes          | Rechazar un comprobante sin escribir el motivo       | rechazarSinMotivo | C | -                         | Media"
+            "ASE-21 | Comprobantes          | Rechazar un comprobante sin escribir el motivo       | rechazarSinMotivo | C | -                         | Media",
+            "ASE-22 | Sesiones              | Arrepentirse de cancelar deja la sesion programada   | noCancelarSesion | A | -                          | Media",
+            "ASE-23 | Sesiones              | Cancelar la sesion la saca de la agenda              | cancelarSesion   | A | -                          | Alta",
+            "ASE-24 | Sesiones              | Una sesion en una fecha pasada no se programa        | sesionPasada     | B | asesorados.sesion.notas    | Media",
+            "ASE-25 | Objetivos             | El radar muestra a los asesorados del coach          | radar            | A | -                          | Media",
+            "ASE-26 | Filtros               | El filtro Activos muestra al asesorado activo        | filtroEstado     | A | Activos                    | Media",
+            "ASE-27 | Filtros               | El filtro Inactivos no muestra al asesorado activo   | filtroEstado     | A | Inactivos                  | Media",
+            "ASE-28 | Cartera               | El filtro Aprobado solo muestra pagos aprobados      | filtroCartera    | A | Aprobado                   | Media",
+            "ASE-29 | Cartera               | Buscar por asesorado en el historial                 | buscarCartera    | A | -                          | Media",
+            "ASE-30 | Notificaciones        | La campana avisa del pago que registro el atleta     | campana          | A | asesorados.pago            | Media",
+            "ASE-31 | Rutinas               | Crear un entrenamiento y asignarlo al asesorado      | rutinaCompleta   | A | asesorados.rutina          | Alta",
+            "ASE-32 | Detalle del asesorado | El coach puede actualizar el peso del asesorado      | pesoDelCoach     | A | -                          | Media"
     })
     void asesorados(String id, String categoria, String descripcion, String accion, String atletaCsv, String valorCsv, String severidad) {
         String atleta = atletaCsv.equals("A") ? atletaA : atletaCsv.equals("B") ? atletaB : atletaC;
@@ -310,6 +322,119 @@ class AsesoradosTest extends BaseTest {
                     boolean cambio = web.esperarQue("corta", d -> web.texto(By.tagName("main")).length() > antes + 3);
                     verificar("No envia un mensaje vacio", "la conversacion no cambia", cambio ? "aparecio un mensaje nuevo" : "no cambio", !cambio);
                 }
+                break;
+            }
+
+            case "noCancelarSesion":
+            case "cancelarSesion": {
+                abrirDetalle(asesorados, atleta);
+                boolean habia = web.esperarQue("respuesta", d -> asesorados.haySesionParaCancelar());
+                verificar("Hay una sesion programada (ASE-05)", "'Cancelar esta sesión'", habia ? "aparece" : "no aparece", habia);
+                if (!habia) break;
+                String pregunta = asesorados.cancelarSesion(accion.equals("cancelarSesion"));
+                verificar("Pregunta antes de cancelar", "una pregunta de confirmacion", siVacio(pregunta, "no pregunto"), !pregunta.isEmpty());
+                if (accion.equals("cancelarSesion")) web.esperarAviso();
+                web.recargar();
+                web.esperarTexto("Agenda programada");
+                if (accion.equals("cancelarSesion")) {
+                    boolean vacia = web.esperarTexto("Sin sesiones programadas");
+                    verificar("La sesion sale de la agenda", "Sin sesiones programadas", vacia ? "Sin sesiones programadas" : "la sesion sigue", vacia);
+                } else {
+                    boolean sigue = web.esperarQue("respuesta", d -> asesorados.haySesionParaCancelar());
+                    verificar("La sesion sigue en la agenda", "la sesion sigue", sigue ? "sigue" : "ya no esta", sigue);
+                }
+                break;
+            }
+
+            case "sesionPasada": {
+                abrirDetalle(asesorados, atleta);
+                asesorados.boton("Programar nueva sesión");
+                String fecha = LocalDate.now().minusDays(Configuracion.numero("asesorados.sesion.dias")).toString();
+                caso.dato("fecha '" + fecha + "', hora '" + Configuracion.texto("asesorados.sesion.hora") + "'");
+                asesorados.llenarSesion(fecha, Configuracion.texto("asesorados.sesion.hora"), valor);
+                if (!asesorados.botonDelDialogoHabilitado("Confirmar cita")) {
+                    verificar("No deja confirmar una fecha pasada", "boton deshabilitado o mensaje", "boton deshabilitado", true);
+                    break;
+                }
+                asesorados.botonDelDialogo("Confirmar cita");
+                String aviso = web.esperarAviso();
+                web.recargar();
+                web.esperarTexto("Agenda programada");
+                boolean programada = web.esperarQue("corta", d -> asesorados.haySesionParaCancelar());
+                verificar("No programa la sesion", "Sin sesiones programadas", programada ? "quedo programada (aviso: " + aviso + ")" : "no quedo programada", !programada);
+                break;
+            }
+
+            case "radar": {
+                web.irA("objectives");
+                boolean esta = web.esperarTexto(atleta);
+                String pagina = web.textoPagina().replace("\n", " ");
+                verificar("Aparece el asesorado", atleta, esta ? "aparece" : "no aparece", esta);
+                verificar("Cuenta a todos los asesorados", "Total asesorados " + ATLETAS, pagina.contains("Total asesorados " + ATLETAS) ? "Total asesorados " + ATLETAS : "otro numero",
+                        pagina.contains("Total asesorados " + ATLETAS));
+                break;
+            }
+
+            case "filtroEstado": {
+                asesorados.abrirLista();
+                asesorados.apareceEnLista(atleta);
+                asesorados.filtrar(1, valor);
+                boolean debeVerse = valor.equals("Activos");
+                boolean ok = web.esperarQue("respuesta", d -> asesorados.fila(atleta).isEmpty() != debeVerse);
+                verificar("Filtro " + valor, debeVerse ? "el asesorado aparece" : "el asesorado no aparece", asesorados.fila(atleta).isEmpty() ? "no aparece" : "aparece", ok);
+                break;
+            }
+
+            case "filtroCartera": {
+                cartera.abrir();
+                web.esperarQue("respuesta", d -> !cartera.movimiento(atletaA).isEmpty() && !cartera.movimiento(atletaB).isEmpty());
+                asesorados.filtrar(1, valor);
+                boolean ok = web.esperarQue("respuesta", d -> !cartera.movimiento(atletaA).isEmpty() && cartera.movimiento(atletaB).isEmpty());
+                verificar("Muestra el pago aprobado (A) y no el rechazado (B)", atletaA + " si, " + atletaB + " no",
+                        "A: " + siVacio(cartera.movimiento(atletaA), "no aparece") + " | B: " + siVacio(cartera.movimiento(atletaB), "no aparece"), ok);
+                break;
+            }
+
+            case "buscarCartera": {
+                cartera.abrir();
+                web.esperarQue("respuesta", d -> !cartera.movimiento(atletaB).isEmpty());
+                web.escribir(By.cssSelector("main input[placeholder^='Buscar por asesorado']"), atleta);
+                boolean ok = web.esperarQue("respuesta", d -> !cartera.movimiento(atleta).isEmpty() && cartera.movimiento(atletaB).isEmpty());
+                verificar("Solo muestra los pagos del asesorado buscado", atleta, "B: " + siVacio(cartera.movimiento(atletaB), "no aparece") + " | buscado: " + siVacio(cartera.movimiento(atleta), "no aparece"), ok);
+                break;
+            }
+
+            case "campana": {
+                new MenuLateral(web).abrirNotificaciones();
+                web.esperarQue("respuesta", d -> web.texto(MenuLateral.PANEL_NOTIFICACIONES).contains(atleta));
+                String avisos = web.texto(MenuLateral.PANEL_NOTIFICACIONES);
+                verificar("Avisa del pago del atleta con su monto", atleta + " y $" + valor, siVacio(avisos, "sin notificaciones"), avisos.contains(atleta) && avisos.contains(valor));
+                break;
+            }
+
+            case "rutinaCompleta": {
+                String nombre = valor + " " + Corrida.numero();
+                caso.dato("entrenamiento '" + nombre + "', ejercicio '" + Configuracion.texto("asesorados.ejercicio") + "'");
+                abrirDetalle(asesorados, atleta);
+                asesorados.boton("Asignar rutina");
+                web.esperarTexto("Asignando a:");
+                asesorados.agregarEjercicio(Configuracion.texto("asesorados.ejercicio"));
+                asesorados.crearEntrenamiento(nombre);
+                String aviso = web.esperarAviso();
+                verificar("Crea el entrenamiento sin error", "sin mensaje de error", siVacio(aviso, "ningun aviso"), !aviso.toLowerCase().contains("error"));
+                abrirDetalle(asesorados, atleta);
+                asesorados.boton("Historial");
+                boolean asignada = web.esperarQue("respuesta", d -> asesorados.textoDialogo().contains(nombre));
+                verificar("Queda asignado al asesorado", "'" + nombre + "' en el control de entrenamiento", siVacio(asesorados.textoDialogo(), "no se abrio"), asignada);
+                break;
+            }
+
+            case "pesoDelCoach": {
+                // al atleta su panel le dice "Solo tu coach puede actualizar este valor"
+                abrirDetalle(asesorados, atleta);
+                web.esperarTexto("Agenda programada");
+                boolean puede = web.existe(By.xpath("//main//input | //main//button[contains(translate(., 'EDITARPSO', 'editarpso'), 'editar') or contains(translate(., 'PESO', 'peso'), 'peso')]"));
+                verificar("El detalle permite actualizar el peso", "un campo o un boton para el peso", puede ? "hay un control" : "no hay ninguno", puede);
                 break;
             }
 

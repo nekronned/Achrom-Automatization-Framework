@@ -15,7 +15,8 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 /**
  * Pestañas Metodologías, Métodos y Rutinas de la biblioteca (Movimientos esta en EjerciciosTest).
- * El sitio no permite borrar: lo que se crea aqui ("ZZ ... Auto N") se queda.
+ * Lo que se crea aqui ("ZZ ... Auto N") se queda: el sitio muestra un boton de borrar en todas las metodologias,
+ * tambien en las del sistema y de otros coaches, y las pruebas nunca lo pulsan para no borrar datos compartidos.
  */
 @Tag("biblioteca")
 @Modulo(nombre = "Biblioteca", titulo = "Biblioteca (metodologías, métodos y rutinas)", ruta = "exercises")
@@ -43,10 +44,16 @@ class BibliotecaTest extends BaseTest {
             "BIB-10 | Rutinas      | Crear bloque con nombre                      | crear      | Bloque       | biblioteca.bloque      | Alta",
             "BIB-11 | Rutinas      | Crear bloque sin nombre                      | crearVacio | Bloque       | ''                     | Media",
             "BIB-12 | Rutinas      | Crear rutina con nombre                      | crear      | Rutina       | biblioteca.rutina      | Alta",
-            "BIB-13 | Rutinas      | Crear rutina sin nombre                      | crearVacio | Rutina       | ''                     | Media"
+            "BIB-13 | Rutinas      | Crear rutina sin nombre                      | crearVacio | Rutina       | ''                     | Media",
+            "BIB-14 | Metodologias | No ofrece borrar las metodologias del sistema | sinBorrar | Metodologías | biblioteca.sistema     | Alta",
+            "BIB-15 | Metodologias | Buscar muestra solo las coincidencias        | buscar     | Metodologías | biblioteca.sistema     | Media",
+            "BIB-16 | Metodos      | Buscar muestra solo las coincidencias        | buscar     | Métodos      | biblioteca.busqueda.metodo | Media",
+            "BIB-17 | Rutinas      | Crear rutina con un ejercicio                | crearConEjercicio | Rutina | biblioteca.rutina      | Alta"
     })
     void biblioteca(String id, String categoria, String descripcion, String accion, String tipo, String valor, String severidad) {
-        if (valor.startsWith("biblioteca.")) {
+        if (valor.equals("biblioteca.sistema") || valor.equals("biblioteca.busqueda.metodo")) {
+            valor = dato(valor, "biblioteca"); // nombres que ya existen en el sitio
+        } else if (valor.startsWith("biblioteca.")) {
             valor = dato(valor, "biblioteca") + " " + Corrida.numero();
         }
         nuevoCaso(id, categoria, descripcion, severidad, tipo + (valor.equals("-") ? "" : ": nombre = '" + valor + "'"));
@@ -109,6 +116,41 @@ class BibliotecaTest extends BaseTest {
                 String obtenido = dialogo ? "se abrio una ventana: " + web.texto(Acciones.DIALOGO) : otraPagina ? "fue a " + web.url()
                         : cambio ? "la lista mostro mas informacion" : "no paso nada";
                 verificar("Se abre el detalle", "una ventana, pagina o seccion con el detalle", obtenido, dialogo || otraPagina || cambio);
+                break;
+            }
+
+            case "sinBorrar": {
+                biblioteca.esperarEnPestana(valor);
+                boolean ofrece = biblioteca.ofreceBorrar(valor);
+                verificar("'" + valor + "' no se puede borrar desde una cuenta de coach", "sin boton de borrar", ofrece ? "muestra el boton de borrar" : "sin boton", !ofrece);
+                break;
+            }
+
+            case "buscar": {
+                String buscado = valor;
+                biblioteca.esperarEnPestana(buscado);
+                int antes = biblioteca.tarjetas();
+                biblioteca.buscar(buscado);
+                boolean filtro = web.esperarQue("respuesta", d -> biblioteca.tarjetas() > 0 && biblioteca.tarjetas() < antes && biblioteca.textoPestana().contains(buscado));
+                verificar("Solo quedan las coincidencias", "menos de " + antes + " tarjetas, con '" + buscado + "'", biblioteca.tarjetas() + " tarjetas", filtro);
+                break;
+            }
+
+            case "crearConEjercicio": {
+                String nombre = valor + " con ejercicio";
+                String ejercicio = com.achron.config.Configuracion.texto("asesorados.ejercicio");
+                caso.dato("rutina '" + nombre + "', ejercicio '" + ejercicio + "'");
+                biblioteca.abrirFormulario(tipo);
+                web.escribir(biblioteca.campoNombre(tipo), nombre);
+                biblioteca.agregarBloqueDeEstructura();
+                biblioteca.importarEjercicio(ejercicio);
+                biblioteca.guardar(tipo);
+                String aviso = web.esperarAviso();
+                verificar("Mensaje de exito", "un aviso de creado/guardado", siVacio(aviso, "ningun aviso"), esExito(aviso));
+                web.recargar();
+                biblioteca.abrirPestana(tipo);
+                boolean despues = biblioteca.esperarEnPestana(nombre);
+                verificar("Aparece en la lista despues de recargar", nombre, despues ? "aparece" : "no aparece", despues);
                 break;
             }
 

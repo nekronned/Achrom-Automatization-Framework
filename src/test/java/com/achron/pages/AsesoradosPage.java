@@ -1,7 +1,9 @@
 package com.achron.pages;
 
 import com.achron.core.Acciones;
+import org.openqa.selenium.Alert;
 import org.openqa.selenium.By;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 
 /** Lista de asesorados (/clients), detalle de un asesorado y sus ventanas de gestion. */
 public class AsesoradosPage {
@@ -67,6 +69,37 @@ public class AsesoradosPage {
     /** En la biblioteca en modo asignacion: boton "Agregar" de la tarjeta del ejercicio. */
     public void agregarEjercicio(String ejercicio) {
         web.clic(By.xpath("//main//h3[normalize-space()='" + ejercicio + "']/ancestor::div[contains(@class,'gorilla-card')]//button[normalize-space()='Agregar']"));
+    }
+
+    private static final By CANCELAR_SESION = By.xpath("//main//button[contains(normalize-space(), 'Cancelar esta sesión')]");
+
+    public boolean haySesionParaCancelar() {
+        return web.existe(CANCELAR_SESION);
+    }
+
+    /** "Cancelar esta sesión" pregunta con un aviso del navegador: se acepta o se rechaza. Devuelve la pregunta ("" si no salio). */
+    public String cancelarSesion(boolean aceptar) {
+        web.clic(CANCELAR_SESION);
+        if (!web.esperarQue("corta", d -> ExpectedConditions.alertIsPresent().apply(d) != null)) {
+            return "";
+        }
+        Alert aviso = web.driver().switchTo().alert();
+        String pregunta = aviso.getText();
+        if (aceptar) aviso.accept(); else aviso.dismiss();
+        return pregunta;
+    }
+
+    /** Elige una opcion en la lista desplegable numero n (desde 1) de la pagina. */
+    public void filtrar(int n, String opcion) {
+        web.clic(By.xpath("(//main//*[@role='combobox'])[" + n + "]"));
+        web.clic(By.xpath("//*[@role='option'][normalize-space()='" + opcion + "']"));
+    }
+
+    /** En la ventana "Añadir a rutina": crea un entrenamiento nuevo con ese nombre y continua. */
+    public void crearEntrenamiento(String nombre) {
+        web.clic(By.xpath("//*[@role='dialog'][@data-state='open']//button[contains(normalize-space(), 'Crear entrenamiento nuevo')]"));
+        web.escribir(By.cssSelector("[role='dialog'][data-state='open'] input[placeholder^='Ej: WOD']"), nombre);
+        botonDelDialogo("Continuar");
     }
 
     private static By filaDe(String nombre) {

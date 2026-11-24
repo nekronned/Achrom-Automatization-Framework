@@ -83,12 +83,21 @@ public class PerfilPage {
     }
 
     public void llenarBanco(String banco, String tipo, String cuenta, String titular) {
-        web.clic(By.xpath("(//main//*[@role='combobox'])[1]"));
-        web.clic(opcion(banco));
-        web.clic(By.xpath("(//main//*[@role='combobox'])[2]"));
-        web.clic(opcion(tipo));
+        elegir(1, banco);
+        elegir(2, tipo);
         escribir("accountNumber", cuenta);
         escribir("accountHolder", titular);
+    }
+
+    /** Elige en la lista numero n. Si se cierra sola antes de mostrar las opciones, se abre otra vez y queda anotado en el log. */
+    private void elegir(int n, String texto) {
+        By lista = By.xpath("(//main//*[@role='combobox'])[" + n + "]");
+        web.clic(lista);
+        if (!web.aparece(opcion(texto))) {
+            com.achron.reporting.Log.get().warn("la lista {} del perfil no mostro '{}'; se abre otra vez", n, texto);
+            web.clic(lista);
+        }
+        web.clic(opcion(texto));
     }
 
     public void guardarBanco() {

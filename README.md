@@ -18,7 +18,7 @@ Probar Achron a mano tomaba tiempo todos los días:
 
 Ahora un solo comando (`mvn test`) hace todo eso y deja los resultados listos.
 
-**Qué es Achron:** una aplicación web para coaches deportivos. Sirve para manejar asesorados, la biblioteca de ejercicios y rutinas, los cobros (cartera), el chat, un asistente con IA y el perfil del coach. Las pruebas cubren el rol **coach**.
+**Qué es Achron:** una aplicación web para coaches deportivos. Sirve para manejar asesorados, la biblioteca de ejercicios y rutinas, los cobros (cartera), el chat, un asistente con IA y el perfil del coach. Las pruebas cubren los roles **coach** y **atleta** (asesorado).
 
 ---
 
@@ -73,7 +73,7 @@ AutomatizacionAchrom
 │   ├── pages                     Page Objects: localizadores y acciones de cada pantalla
 │   │   ├── LoginPage, RegistroPage, MenuLateral, PanelPage, PerfilPage,
 │   │   ├── EjerciciosPage, BibliotecaPage, InicioPublicoPage, SeccionesPage,
-│   │   └── AtletaPage, AsesoradosPage, CarteraPage   (coach con asesorados)
+│   │   └── AtletaPage, AsesoradosPage, CarteraPage   (atleta y coach con asesorados)
 │   ├── reporting                 todo lo que se genera después de probar
 │   │   ├── Caso.java             un caso ejecutado: comprobaciones, captura y resultado
 │   │   ├── SeguimientoCasos.java extensión JUnit: log, captura, Allure, reportes al final
@@ -87,7 +87,8 @@ AutomatizacionAchrom
 │   └── tests                     una clase por módulo
 │       ├── RegistroTest, SesionTest, InicioPublicoTest, PanelTest,
 │       ├── PerfilTest, EjerciciosTest, BibliotecaTest, SeccionesTest,
-│       └── AsesoradosTest        coach con atletas: comprobantes, chat, sesiones, rutinas
+│       ├── AsesoradosTest        coach con atletas: comprobantes, chat, sesiones, rutinas
+│       └── AtletaTest            rol atleta: registro, elegir coach, panel, perfil, pago, chat y sesiones
 ├── src/test/resources
 │   ├── config.properties         URL, navegador, esperas, rutas, datos del reporte
 │   ├── datos.properties          datos de prueba
@@ -115,7 +116,7 @@ Cada pantalla del sitio tiene una clase en `pages` con sus localizadores (cómo 
 ### BaseTest y el ciclo de vida de JUnit
 JUnit ejecuta, en este orden:
 
-1. `@BeforeAll` (una vez por clase): cada clase crea su cuenta de coach con `CuentaDePrueba.crearCoach`. `AsesoradosTest` además crea tres atletas con `CuentaDePrueba.crearAtleta`. Cada atleta elige al coach, registra un pago con un comprobante de prueba (una imagen; no se mueve dinero) y el primero le escribe por el chat.
+1. `@BeforeAll` (una vez por clase): cada clase crea su cuenta de coach con `CuentaDePrueba.crearCoach`. `AsesoradosTest` además crea tres atletas con `CuentaDePrueba.crearAtleta`. Cada atleta elige al coach, registra un pago con un comprobante de prueba (una imagen; no se mueve dinero) y el primero le escribe por el chat. `AtletaTest` crea un coach y el atleta lo registra su primer caso (ATL-01); los demás casos entran con esa cuenta, y los que necesitan al coach (ver el comprobante, responder, programar una sesión) entran como coach en el mismo navegador después de salir de la cuenta del atleta.
 2. Por cada caso:
    - `@BeforeEach`: `BaseTest` abre un navegador nuevo.
    - El caso (`@ParameterizedTest`): hace lo que dice la tabla y anota las comprobaciones.
@@ -230,6 +231,7 @@ Si el sitio está lento, basta con subir los tiempos: `mvn test -Despera.respues
 | Con Edge | `mvn test -Dnavegador=edge` |
 | Ver Allure | `mvn allure:serve` (abre el navegador con el reporte) |
 | Generar Allure en carpeta | `mvn allure:report` → `target/site/allure-maven-plugin/index.html` |
+| Abrir una cuenta para revisar a mano | `mvn test-compile exec:java` (crea un coach nuevo y deja Chrome abierto en su perfil; imprime el correo; no cuenta como corrida) |
 
 Un caso fallado no detiene la corrida (`testFailureIgnore` en el `pom.xml`), así siempre salen todos los reportes. Maven igual imprime al final qué casos fallaron.
 
@@ -334,6 +336,7 @@ Los umbrales están en la hoja Supuestos:
   - `REG` registro
   - `SES` sesión
   - `ASE` coach con asesorados
+  - `ATL` rol atleta
   - `INI` página pública
   - `DAS` panel
   - `PER` perfil
