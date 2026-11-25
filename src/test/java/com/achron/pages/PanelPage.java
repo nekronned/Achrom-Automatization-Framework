@@ -60,4 +60,21 @@ public class PanelPage {
         int i = pagina.indexOf("Sesiones del");
         return i < 0 ? "" : pagina.substring(i, Math.min(pagina.length(), i + 35)).replace("\n", " ");
     }
+
+    /** Pasa el mouse por el grafico "Actividad de Alumnos" y devuelve lo que dice su etiqueta en cada punto ("" si no sale). */
+    public String valoresDelGraficoDeActividad() {
+        org.openqa.selenium.By grafico = org.openqa.selenium.By.xpath("(//main//*[starts-with(normalize-space(text()), 'Actividad de Alumnos')]/following::*[name()='svg' and contains(@class, 'recharts-surface')])[1]");
+        org.openqa.selenium.WebElement svg = web.encontrar(grafico);
+        ((org.openqa.selenium.JavascriptExecutor) web.driver()).executeScript("arguments[0].scrollIntoView({block: 'center'});", svg);
+        StringBuilder valores = new StringBuilder();
+        int ancho = svg.getSize().getWidth();
+        for (int i = 1; i <= 7; i++) {
+            new org.openqa.selenium.interactions.Actions(web.driver()).moveToElement(svg, -ancho / 2 + ancho * i / 8, 0).perform();
+            org.openqa.selenium.By etiqueta = org.openqa.selenium.By.cssSelector(".recharts-tooltip-wrapper");
+            web.esperarQue("corta", d -> web.texto(etiqueta).contains("semana"));
+            String texto = web.texto(etiqueta);
+            if (!texto.isEmpty() && valores.indexOf(texto) < 0) valores.append(texto).append(" | ");
+        }
+        return valores.toString().trim();
+    }
 }

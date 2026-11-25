@@ -88,6 +88,7 @@ AutomatizacionAchrom
 │       ├── RegistroTest, SesionTest, InicioPublicoTest, PanelTest,
 │       ├── PerfilTest, EjerciciosTest, BibliotecaTest, SeccionesTest,
 │       ├── AsesoradosTest        coach con atletas: comprobantes, chat, sesiones, rutinas
+│       ├── RutasTest             rutas con y sin sesión, permisos por rol, /login, /client-login, 404 y /routines/new
 │       └── AtletaTest            rol atleta: registro, elegir coach, panel, perfil, pago, chat y sesiones
 ├── src/test/resources
 │   ├── config.properties         URL, navegador, esperas, rutas, datos del reporte
@@ -225,7 +226,7 @@ Si el sitio está lento, basta con subir los tiempos: `mvn test -Despera.respues
 | Qué | Comando |
 | --- | --- |
 | Todo | `mvn test` |
-| Un módulo | `mvn test -Dgroups=perfil` (etiquetas: `registro`, `sesion`, `inicio`, `panel`, `perfil`, `ejercicios`, `biblioteca`, `secciones`, `asesorados`) |
+| Un módulo | `mvn test -Dgroups=perfil` (etiquetas: `registro`, `sesion`, `inicio`, `panel`, `perfil`, `ejercicios`, `biblioteca`, `secciones`, `asesorados`, `atleta`, `rutas`) |
 | Una clase | `mvn test -Dtest=PerfilTest` |
 | Sin abrir ventanas | `mvn test -Dnavegador.headless=true` |
 | Con Edge | `mvn test -Dnavegador=edge` |
@@ -337,6 +338,7 @@ Los umbrales están en la hoja Supuestos:
   - `SES` sesión
   - `ASE` coach con asesorados
   - `ATL` rol atleta
+  - `RUT` rutas, permisos por rol y accesos
   - `INI` página pública
   - `DAS` panel
   - `PER` perfil

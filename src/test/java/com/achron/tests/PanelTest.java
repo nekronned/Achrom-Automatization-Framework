@@ -52,7 +52,8 @@ class PanelTest extends BaseTest {
             "DAS-23 | Idioma              | Cambiar a aleman traduce el menu                | idiomaMenu      | DE - Deutsch           | -                           | Baja",
             "DAS-24 | Idioma              | Cambiar a frances traduce el menu               | idiomaMenu      | FR - Français          | -                           | Baja",
             "DAS-25 | Idioma              | Cambiar a portugues traduce el menu             | idiomaMenu      | PT - Português         | -                           | Baja",
-            "DAS-26 | Pantalla pequeña    | En celular el boton de menu muestra el menu     | menuMovil       | -                      | -                           | Media"
+            "DAS-26 | Pantalla pequeña    | En celular el boton de menu muestra el menu     | menuMovil       | -                      | -                           | Media",
+            "DAS-27 | Contenido del panel | Una cuenta nueva no tiene entrenamientos en el grafico | grafico   | -                      | -                           | Media"
     })
     void panel(String id, String categoria, String descripcion, String accion, String objetivoCsv, String valorCsv, String severidad) {
         String objetivo = dato(objetivoCsv, "panel");
@@ -179,6 +180,13 @@ class PanelTest extends BaseTest {
                 boolean visibleDespues = web.aparece(enlaceCartera);
                 verificar("En celular el menu empieza cerrado", "enlaces ocultos", ocultoAntes ? "ocultos" : "visibles", ocultoAntes);
                 verificar("El boton de menu lo abre", "enlace 'Cartera' visible", visibleDespues ? "visible" : "no visible", visibleDespues);
+                break;
+            }
+
+            case "grafico": {
+                String valores = panel.valoresDelGraficoDeActividad();
+                boolean enCero = !valores.isEmpty() && !valores.matches("(?s).*:\\s*[1-9].*");
+                verificar("Actividad de alumnos en 0", "Esta semana : 0 y Semana pasada : 0", siVacio(valores, "no se pudo leer el grafico"), enCero);
                 break;
             }
 
