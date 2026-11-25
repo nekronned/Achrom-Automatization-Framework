@@ -213,10 +213,12 @@ class AtletaTest extends BaseTest {
             }
 
             case "consejos": {
-                String antes = web.textoPagina();
+                // se espera a que todo el panel cargue y solo se mira la seccion de consejos: otro texto que llegue tarde no cuenta
+                web.esperarTexto("Resumen de progreso");
+                String antes = pagina.seccion("Consejos para tu objetivo", 260);
                 String url = web.url();
                 pagina.clicEn("Ver todos los consejos");
-                boolean cambio = web.esperarQue("corta", d -> web.hayDialogoAbierto() || !web.url().equals(url) || !web.textoPagina().equals(antes));
+                boolean cambio = web.esperarQue("corta", d -> web.hayDialogoAbierto() || !web.url().equals(url) || !pagina.seccion("Consejos para tu objetivo", 260).equals(antes));
                 verificar("Muestra mas consejos", "una ventana, una pagina o mas consejos", cambio ? "cambio la pantalla" : "no paso nada", cambio);
                 break;
             }
